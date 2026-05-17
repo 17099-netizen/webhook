@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Workflow Trigger</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f9; }
+        .container { max-width: 500px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        textarea { width: 100%; box-sizing: border-box; padding: 10px; margin-top: 10px; border-radius: 4px; border: 1px solid #ccc; }
+        button { background: #238636; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        button:hover { background: #2ea043; }
+        #status { margin-top: 15px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h3>ส่งข้อมูลเข้า GitHub Actions (Direct)</h3>
+    <label for="payloadInput">ข้อความหรือ Payload ที่ต้องการส่ง:</label>
+    <textarea id="payloadInput" rows="5" placeholder="พิมพ์ข้อความที่นี่..."></textarea>
+    
+    <button onclick="sendToGitHub()">กดเพื่อส่งข้อมูล</button>
+    
+    <div id="status"></div>
+</div>
+
+<script>
+async function sendToGitHub() {
+    const statusDiv = document.getElementById('status');
+    const payloadValue = document.getElementById('payloadInput').value;
+
+    statusDiv.style.color = 'orange';
+    statusDiv.innerText = 'กำลังส่งข้อมูลไปที่ GitHub...';
+
+    // ข้อมูลของคุณที่เซ็ตไว้ให้เรียบร้อยแล้ว
+    const url = 'https://api.github.com/repos/17099-netizen/webhook/actions/workflows/relay.yml/dispatches';
+    const token = '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';
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/vnd.github+json',
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                ref: 'main', // รันที่ Branch main
+                inputs: {
+                    payload: payloadValue // ส่งข้อมูลจากช่องพิมพ์เข้าไป
+                }
+            })
+        });
+
+        // GitHub API จะตอบกลับด้วย Status 204 ถ้าสั่งรันสำเร็จ
+        if (response.status === 204) {
+            statusDiv.style.color = 'green';
+            statusDiv.innerText = '✅ สำเร็จ! สั่งรัน Workflow เรียบร้อยแล้ว';
+        } else {
+            const errorResponse = await response.text();
+            statusDiv.style.color = 'red';
+            statusDiv.innerText = `❌ พัง! (Status ${response.status}): ${errorResponse}`;
+        }
+    } catch (error) {
+        statusDiv.style.color = 'red';
+        statusDiv.innerText = '❌ เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + error.message;
+    }
+}
+</script>
+
+</body>
+</html>
